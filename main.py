@@ -4,7 +4,11 @@ from pprint import pprint
 
 def fetch_hh_vacancies():
     base_url = 'https://api.hh.ru/vacancies'
-    response = requests.get(base_url)
+    payload = {
+        'text': 'программист',
+        'area': 1
+    }
+    response = requests.get(base_url, params=payload)
     response.raise_for_status()
     pprint(response.json())
 
