@@ -216,3 +216,5 @@ cython_debug/
 .replit
 .index.html
 index.html
+.idea/hh_parser.iml
+.idea/misc.xml
