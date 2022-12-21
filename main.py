@@ -45,9 +45,9 @@ def predict_rub_salary(vacancy):
 def get_average_salary(vacancy):
     total_salary = 0
     vacancies_processed = 0
-    for i in range(20):
-        if predict_rub_salary(vacancy[i]['salary']) is not None:
-            total_salary += predict_rub_salary(vacancy[i]['salary'])
+    for page in range(20):
+        if predict_rub_salary(vacancy[page]['salary']) is not None:
+            total_salary += predict_rub_salary(vacancy[page]['salary'])
             vacancies_processed += 1
     average_salary = int(total_salary / vacancies_processed)
     return vacancies_processed, average_salary
@@ -60,19 +60,20 @@ def fetch_all_vacancies(language):
         page_response = requests.get(
             url, params={
                 'page': page,
-                'text': f'Программист {language}',
+                'per_page': 100,
+                'text': language,
                 'area': 1,
-                'period': 30,
                 'describe_arguments': True
             }
         )
         page_response.raise_for_status()
 
         page_payload = page_response.json()
-        total.append(page_payload)
+        total.append(page_payload['items'])
         if page >= page_payload['pages']:
             break
     return total
+
 
 
 def main():
@@ -104,15 +105,32 @@ def main():
     # catalog_vacancies = dict(zip(languages, language_metric))
     # pprint(catalog_vacancies)
 
-    language_metric = []
-    all = fetch_all_vacancies('Kotlin')[15]
+    # language_metric = []
+    # all = fetch_all_vacancies('Kotlin')[17]['items'][0]['salary']
     # temporary = {}
     # vacancy = fetch_salary(languages[4])['items']
     # temporary['vacancies_found'] = fetch_rating_vacancies('Kotlin')
     # temporary['vacancies_processed'] = get_average_salary(vacancy)[0]
     # temporary['average_salary'] = get_average_salary(vacancy)[1]
     # language_metric.append(temporary)
-    pprint(all)
+
+    language = languages[1]
+    all_vacancies = fetch_all_vacancies(language)
+    founds = fetch_rating_vacancies(language)
+    total_salary = 0
+    vacancies_processed = 0
+    alll = []
+    for job in all_vacancies:
+        for vacancy in job:
+            if predict_rub_salary(vacancy['salary']) is not None:
+                total_salary += predict_rub_salary(vacancy['salary'])
+                vacancies_processed += 1
+        average_salary = int(total_salary / vacancies_processed)
+        alll.append(average_salary)
+        avrg = int(sum(alll) / len(alll))
+    print(vacancies_processed, avrg, founds)
+    print(len(alll))
+    # print(get_average_salary(fetch_all_vacancies('Kotlin')))
 
 
 
