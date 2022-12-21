@@ -1,4 +1,5 @@
 import requests
+from itertools import count
 from pprint import pprint
 
 
@@ -52,6 +53,28 @@ def get_average_salary(vacancy):
     return vacancies_processed, average_salary
 
 
+def fetch_all_vacancies(language):
+    total = []
+    url = 'https://api.hh.ru/vacancies'
+    for page in count(0):
+        page_response = requests.get(
+            url, params={
+                'page': page,
+                'text': f'Программист {language}',
+                'area': 1,
+                'period': 30,
+                'describe_arguments': True
+            }
+        )
+        page_response.raise_for_status()
+
+        page_payload = page_response.json()
+        total.append(page_payload)
+        if page >= page_payload['pages']:
+            break
+    return total
+
+
 def main():
     languages = [
         'Javascript',
@@ -69,17 +92,28 @@ def main():
         'TypeScript',
         'Scala'
     ]
-    language_metric = []
-    for language in languages:
-        temporary = {}
-        vacancy = fetch_salary(language)['items']
-        temporary['vacancies_found'] = fetch_rating_vacancies(language)
-        temporary['vacancies_processed'] = get_average_salary(vacancy)[0]
-        temporary['average_salary'] = get_average_salary(vacancy)[1]
-        language_metric.append(temporary)
+    # language_metric = []
+    # for language in languages:
+    #     temporary = {}
+    #     vacancy = fetch_salary(language)['items']
+    #     temporary['vacancies_found'] = fetch_rating_vacancies(language)
+    #     temporary['vacancies_processed'] = get_average_salary(vacancy)[0]
+    #     temporary['average_salary'] = get_average_salary(vacancy)[1]
+    #     language_metric.append(temporary)
+    #
+    # catalog_vacancies = dict(zip(languages, language_metric))
+    # pprint(catalog_vacancies)
 
-    catalog_vacancies = dict(zip(languages, language_metric))
-    pprint(catalog_vacancies)
+    language_metric = []
+    all = fetch_all_vacancies('Kotlin')[15]
+    # temporary = {}
+    # vacancy = fetch_salary(languages[4])['items']
+    # temporary['vacancies_found'] = fetch_rating_vacancies('Kotlin')
+    # temporary['vacancies_processed'] = get_average_salary(vacancy)[0]
+    # temporary['average_salary'] = get_average_salary(vacancy)[1]
+    # language_metric.append(temporary)
+    pprint(all)
+
 
 
 if __name__ == '__main__':
