@@ -1,19 +1,19 @@
 import requests
 from itertools import count
 from pprint import pprint
+from datetime import date, timedelta
 
 
 def fetch_rating_vacancies(language):
     url = 'https://api.hh.ru/vacancies'
     payload = {
         'text': f'Программист {language}',
-        'area': 1
+        'area': 1,
     }
     response = requests.get(url, params=payload)
     response.raise_for_status()
     count = response.json()['found']
-    if count >= 100:
-        return count
+    return count
 
 
 def fetch_salary(language):
@@ -56,19 +56,17 @@ def get_average_salary(vacancy):
 def fetch_all_vacancies(language):
     total = []
     url = 'https://api.hh.ru/vacancies'
-    for page in count(0):
+    for page in range(99):
         page_response = requests.get(
             url, params={
                 'page': page,
-                'per_page': 100,
-                'text': language,
+                'text': f'программист {language}',
                 'area': 1,
-                'describe_arguments': True
             }
         )
         page_response.raise_for_status()
-
         page_payload = page_response.json()
+
         total.append(page_payload['items'])
         if page >= page_payload['pages']:
             break
@@ -88,7 +86,8 @@ def main():
         'Swift',
         'R',
         'Ruby',
-        'C/C++',
+        'C',
+        'C++',
         'Matlab',
         'TypeScript',
         'Scala'
@@ -114,23 +113,35 @@ def main():
     # temporary['average_salary'] = get_average_salary(vacancy)[1]
     # language_metric.append(temporary)
 
-    language = languages[1]
-    all_vacancies = fetch_all_vacancies(language)
-    founds = fetch_rating_vacancies(language)
-    total_salary = 0
-    vacancies_processed = 0
-    alll = []
-    for job in all_vacancies:
-        for vacancy in job:
-            if predict_rub_salary(vacancy['salary']) is not None:
-                total_salary += predict_rub_salary(vacancy['salary'])
-                vacancies_processed += 1
-        average_salary = int(total_salary / vacancies_processed)
-        alll.append(average_salary)
-        avrg = int(sum(alll) / len(alll))
-    print(vacancies_processed, avrg, founds)
-    print(len(alll))
-    # print(get_average_salary(fetch_all_vacancies('Kotlin')))
+
+    language_metric = []
+    for language in languages:
+        try:
+            # плохое название, но без конкретики лучше не сделать
+            all_vacancies = fetch_all_vacancies(language)
+        except requests.exceptions.HTTPError as error:
+            print(error)
+        total_salary = 0
+        vacancies_processed = 0
+        alll = []
+        temporary = {}
+        for job in all_vacancies:
+            for vacancy in job:
+                if predict_rub_salary(vacancy['salary']) is not None:
+                    total_salary += predict_rub_salary(vacancy['salary'])
+                    vacancies_processed += 1
+            average_salary = int(total_salary / vacancies_processed)
+            alll.append(average_salary)
+            avrg = int(sum(alll) / len(alll))
+
+            temporary['vacancies_found'] = fetch_rating_vacancies(language)
+            temporary['vacancies_processed'] = vacancies_processed
+            temporary['average_salary'] = average_salary
+            language_metric.append(temporary)
+
+    catalog_vacancies = dict(zip(languages, language_metric))
+    pprint(catalog_vacancies)
+  
 
 
 
